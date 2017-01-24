@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--<color name="colorPrimary">#8BC34A</color>
+    <color name="colorPrimaryDark">#689F38</color>
+    <color name="colorAccent">#8BC34A</color>-->
+    <color name="colorPrimary">#F44336</color>
+    <color name="colorPrimaryDark">#D32F2F</color>
+    <color name="colorAccent">#F44336</color>
+
+    <color name="colorNoteRed">#F44336</color>
+    <color name="colorNoteLightGreen">#8BC34A</color>
+    <color name="colorNoteGreen">#4CAF50</color>
+    <color name="colorNoteBlue">#448AFF</color>
+    <color name="colorNoteCyan">#00BCD4</color>
+    <color name="colorNoteYellow">#FFEB3B</color>
+    <color name="colorNoteOrange">#FF9800</color>
+    <color name="colorNotePink">#FF4081</color>
+    <color name="colorNoteDeepPurple">#673AB7</color>
+    <color name="colorNoteGrey">#9E9E9E</color>
+
+    <array name="priorityColors">
+        <item>@color/colorNoteRed</item>
+        <item>@color/colorNoteLightGreen</item>
+        <item>@color/colorNoteGreen</item>
+        <item>@color/colorNoteBlue</item>
+        <item>@color/colorNoteCyan</item>
+        <item>@color/colorNoteYellow</item>
+        <item>@color/colorNoteOrange</item>
+        <item>@color/colorNotePink</item>
+        <item>@color/colorNoteDeepPurple</item>
+        <item>@color/colorNoteGrey</item>
+    </array>
+
+</resources>

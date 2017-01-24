@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SmoothCheckBox">
+        <attr name="scb_duration" format="integer"/>
+        <attr name="scb_stroke_width" format="dimension"/>
+        <attr name="scb_color_tick" format="color"/>
+        <attr name="scb_color_checked" format="color"/>
+        <attr name="scb_color_unchecked" format="color"/>
+        <attr name="scb_color_unchecked_stroke" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="SelectableColorView">
+        <attr name="scv_duration" format="integer"/>
+        <attr name="scv_stroke_width" format="dimension"/>
+        <!--<attr name="scv_color_tick" format="color"/>-->
+        <attr name="scv_color_checked" format="color"/>
+        <attr name="scv_color_unchecked" format="color"/>
+        <attr name="scv_color_unchecked_stroke" format="color"/>
+    </declare-styleable>
+</resources>

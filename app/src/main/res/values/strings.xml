@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Zenote</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="dialog_add_note_hint">Title</string>
+    <string name="dialog_add_note_priority">Priority</string>
+    <string name="dialog_add_note_title">Add Note</string>
+    <string name="dialog_add_note_positive">ADD</string>
+    <string name="dialog_add_note_negative">CANCEL</string>
+</resources>
