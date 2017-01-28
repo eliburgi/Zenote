@@ -7,4 +7,9 @@
     <string name="dialog_add_note_title">Add Note</string>
     <string name="dialog_add_note_positive">ADD</string>
     <string name="dialog_add_note_negative">CANCEL</string>
+
+    <string name="menu_action_undo">Undo</string>
+
+    <string name="snackbar_removed_note_message">Removed completed notes</string>
+    <string name="snackbar_undo_action">UNDO</string>
 </resources>

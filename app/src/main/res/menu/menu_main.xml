@@ -3,11 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.eliburgi.zenote.activities.MainActivity">
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_remove_all_notes"
-        android:title="Delete Notes" />
+        android:id="@+id/menu_undo"
+        android:title="@string/menu_action_undo" />
 </menu>
