@@ -1,7 +1,10 @@
 package com.eliburgi.zenote.adapters;
 
+import android.content.Context;
+import android.graphics.Paint;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +23,7 @@ import java.util.List;
  */
 
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> {
+    private Context mContext;
     private List<Note> mNotes;
     private NoteItemListener mNoteItemListener;
 
@@ -34,7 +38,8 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
         }
     }
 
-    public NotesAdapter(@NonNull List<Note> notes, @Nullable NoteItemListener noteItemListener) {
+    public NotesAdapter(Context context, @NonNull List<Note> notes, @Nullable NoteItemListener noteItemListener) {
+        mContext = context.getApplicationContext();
         mNotes = notes;
         mNoteItemListener = noteItemListener;
     }
@@ -64,6 +69,15 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
         holder.mScbNoteCompleted.setCheckedColor(note.getColor());
         holder.mScbNoteCompleted.setStrokeColor(note.getColor());
 
+        if(holder.mScbNoteCompleted.isChecked()) {
+            // Strikethrough
+            holder.mTvNoteContent.setPaintFlags(holder.mTvNoteContent.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.mTvNoteContent.setTextColor(ContextCompat.getColor(mContext, R.color.completed_note_title_color));
+        } else {
+            holder.mTvNoteContent.setPaintFlags(holder.mTvNoteContent.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.mTvNoteContent.setTextColor(ContextCompat.getColor(mContext, R.color.normal_note_title_color));
+        }
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -86,12 +100,14 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
 
     public void replaceData(@NonNull List<Note> notes) {
         setList(notes);
-        notifyDataSetChanged();
+        //notifyDataSetChanged();
+        notifyItemRangeInserted(0, notes.size());
     }
 
     public void add(@NonNull Note note) {
         mNotes.add(note);
-        notifyDataSetChanged();
+        //notifyDataSetChanged();
+        notifyItemInserted(mNotes.size() - 1);
     }
 
     public void addAll(@NonNull List<Note> notes) {
@@ -99,6 +115,12 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
             mNotes.add(n);
         }
         notifyDataSetChanged();
+    }
+
+    public void remove(@NonNull Note note) {
+        int index = mNotes.indexOf(note);
+        mNotes.remove(note);
+        notifyItemRemoved(index);
     }
 
     public void removeAll() {
@@ -115,8 +137,15 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
     }
 
     public void removeCompletedNotes() {
-        mNotes.removeAll(getCompletedNotes());
-        notifyDataSetChanged();
+        List<Note> removedNotes = getCompletedNotes();
+        int size = removedNotes.size();
+        for(Note n : removedNotes) {
+            int index = mNotes.indexOf(n);
+            mNotes.remove(n);
+            notifyItemRemoved(index);
+        }
+        //mNotes.removeAll(getCompletedNotes());
+        //notifyDataSetChanged();
     }
 
     public boolean hasCompletedNote() {
@@ -124,6 +153,18 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
             if(n.isCompleted()) return true;
         }
         return false;
+    }
+
+    public void sortNotes() {
+
+    }
+
+    public void sortUncompletedNotes() {
+
+    }
+
+    public void sortCompletedNotes() {
+
     }
 
     private void setList(@NonNull List<Note> notes) {

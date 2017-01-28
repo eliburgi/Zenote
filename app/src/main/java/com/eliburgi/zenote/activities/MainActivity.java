@@ -31,6 +31,8 @@ import com.eliburgi.zenote.models.Note;
 import java.util.ArrayList;
 import java.util.List;
 
+import jp.wasabeef.recyclerview.animators.FadeInLeftAnimator;
+
 public class MainActivity extends AppCompatActivity implements NotesAdapter.NoteItemListener {
 
     private NotesAdapter mNotesAdapter;
@@ -76,11 +78,12 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
 
         RecyclerView rvNotes = (RecyclerView) findViewById(R.id.rv_main_notes);
         rvNotes.setHasFixedSize(true);
+        rvNotes.setItemAnimator(new FadeInLeftAnimator());
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
         rvNotes.setLayoutManager(layoutManager);
 
-        mNotesAdapter = new NotesAdapter(notes, this);
+        mNotesAdapter = new NotesAdapter(this, notes, this);
         rvNotes.setAdapter(mNotesAdapter);
 
         checkForCompletedNotes();
@@ -169,7 +172,12 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
         // Update database entry
         NoteManager.newInstance(this).updateNote(note);
 
+        // Show/Hide Fab
         checkForCompletedNotes();
+
+        // Refresh view of particular note by removing and reinserting it
+        mNotesAdapter.remove(note);
+        mNotesAdapter.add(note);
     }
 
     private void deleteCompletedNotes() {
