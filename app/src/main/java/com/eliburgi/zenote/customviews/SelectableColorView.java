@@ -17,7 +17,6 @@ import android.view.animation.LinearInterpolator;
 import android.widget.Checkable;
 
 import com.eliburgi.zenote.R;
-import com.eliburgi.zenote.vendors.CompatUtils;
 
 
 public class SelectableColorView extends View implements Checkable {

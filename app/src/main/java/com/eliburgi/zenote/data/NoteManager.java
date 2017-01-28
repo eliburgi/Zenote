@@ -27,6 +27,7 @@ public class NoteManager {
 
     private NoteManager(Context context) {
         mContext = context.getApplicationContext();
+        mDbHelper = new NoteDbHelper(mContext);
     }
 
     public static NoteManager newInstance(Context context) {
@@ -34,12 +35,6 @@ public class NoteManager {
             sNoteManager = new NoteManager(context.getApplicationContext());
         }
         return sNoteManager;
-    }
-
-    // Connects to the database
-    // Must be called in onCreate()
-    public void connectToDb() {
-        mDbHelper = new NoteDbHelper(mContext);
     }
 
     // CRUD
@@ -86,7 +81,11 @@ public class NoteManager {
         return notes;
     }
 
-    // CRUD
+    /**
+     * Searches the note with the given ID in the database and returns it.
+     * @param id The ID of the note to search and return
+     * @return The note entry with the given ID. If no entry with @param id is found, null is returned.
+     */
     @Nullable
     public Note getNote(long id) {
         Note note;
@@ -141,13 +140,17 @@ public class NoteManager {
     }
 
     // CRUD
-    public void deleteAllNotes() {
+    public void deleteCompletedNotes() {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         db.delete(
                 NoteContract.NoteEntry.TABLE_NAME,
-                null,
+                NoteContract.NoteEntry.COLUMN_NAME_COMPLETED + " = 1",
                 null
         );
+    }
+
+    public void destroy() {
+        mDbHelper.close();
     }
 
 }

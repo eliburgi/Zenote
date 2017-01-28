@@ -7,6 +7,8 @@
     <color name="colorPrimaryDark">#D32F2F</color>
     <color name="colorAccent">#F44336</color>
 
+    <color name="fab_delete_notes">#2196f3</color>
+
     <color name="colorNoteRed">#F44336</color>
     <color name="colorNoteLightGreen">#8BC34A</color>
     <color name="colorNoteGreen">#4CAF50</color>

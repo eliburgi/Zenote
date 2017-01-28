@@ -10,8 +10,9 @@ import android.widget.TextView;
 
 import com.eliburgi.zenote.R;
 import com.eliburgi.zenote.models.Note;
-import com.eliburgi.zenote.vendors.SmoothCheckBox;
+import com.eliburgi.zenote.customviews.SmoothCheckBox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -96,6 +97,26 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
     public void removeAll() {
         mNotes.clear();
         notifyDataSetChanged();
+    }
+
+    public List<Note> getCompletedNotes() {
+        List<Note> completedNotes = new ArrayList<>();
+        for(Note n : mNotes) {
+            if(n.isCompleted()) completedNotes.add(n);
+        }
+        return completedNotes;
+    }
+
+    public void removeCompletedNotes() {
+        mNotes.removeAll(getCompletedNotes());
+        notifyDataSetChanged();
+    }
+
+    public boolean hasCompletedNote() {
+        for(Note n : mNotes) {
+            if(n.isCompleted()) return true;
+        }
+        return false;
     }
 
     private void setList(@NonNull List<Note> notes) {

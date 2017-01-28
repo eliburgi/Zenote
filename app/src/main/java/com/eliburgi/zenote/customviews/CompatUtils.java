@@ -1,4 +1,4 @@
-package com.eliburgi.zenote.vendors;
+package com.eliburgi.zenote.customviews;
 
 import android.content.Context;
 

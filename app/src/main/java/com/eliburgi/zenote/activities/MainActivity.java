@@ -10,11 +10,12 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
+import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -31,10 +32,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements NotesAdapter.NoteItemListener {
 
     private NotesAdapter mNotesAdapter;
-
-    // VIEWS
-    private View mAddNoteDialogCustomView;
-    private MaterialDialog mAddNoteDialog;
+    private FloatingActionButton mFabDeleteNotes;
 
     /********************************************
     /*--------------- ACTIVITY OVERRIDES --------
@@ -48,8 +46,8 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton fabAddNote = (FloatingActionButton) findViewById(R.id.fab_add_note);
+        fabAddNote.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Show AddNote-Dialog
@@ -57,15 +55,20 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
             }
         });
 
-        // Inflate the AddNoteDialog View for reusing and finalize the layout dynamically
-        initAddNoteDialog();
+        mFabDeleteNotes = (FloatingActionButton) findViewById(R.id.fab_delete_notes);
+        mFabDeleteNotes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Delete all completed notes
+                deleteCompletedNotes();
+            }
+        });
 
-        // Establish a connection to the database
-        // Important: Must be called!
-        NoteManager.newInstance(getApplicationContext()).connectToDb();
+        // Hide and disable the delete FAB by default
+        mFabDeleteNotes.setVisibility(View.GONE);
 
         // Load all notes from Database
-        List<Note> notes = NoteManager.newInstance(getApplicationContext()).getAllNotes();
+        List<Note> notes = NoteManager.newInstance(this).getAllNotes();
 
         RecyclerView rvNotes = (RecyclerView) findViewById(R.id.rv_main_notes);
         rvNotes.setHasFixedSize(true);
@@ -75,10 +78,15 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
 
         mNotesAdapter = new NotesAdapter(notes, this);
         rvNotes.setAdapter(mNotesAdapter);
+
+        checkForCompletedNotes();
     }
 
     @Override
     protected void onDestroy() {
+        // Close the database
+        NoteManager.newInstance(this).destroy();
+
         super.onDestroy();
     }
 
@@ -100,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
             case R.id.action_settings:
                 return true;
             case R.id.menu_remove_all_notes:
-                deleteAllNotes();
+                deleteCompletedNotes();
                 return true;
             default:
                 return false;
@@ -114,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
 
     @Override
     public void onCompleteNoteItemClick(Note note, boolean completed) {
-        completeNote(note, completed);
+        updateNote(note, completed);
     }
 
 
@@ -140,77 +148,93 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
         note.setContent(content);
         note.setColor(color);
 
-        // Add the note to database
-        long id = NoteManager.newInstance(getApplicationContext()).createNote(note);
+        // Save the note to the database
+        long id = NoteManager.newInstance(this).createNote(note);
         note.setId(id);
 
         // Add the note to the adapter cache
         mNotesAdapter.add(note);
+
+        // Note saved successfully
+        Toast.makeText(MainActivity.this, "Successfully created the new Note!", Toast.LENGTH_SHORT).show();
     }
 
     // Completes/Uncompletes the given note and updates its database entry
-    private void completeNote(@NonNull Note note, boolean completed) {
+    private void updateNote(@NonNull Note note, boolean completed) {
         // Update note completed flag
         note.setCompleted(completed);
-        // Update Database
-        NoteManager.newInstance(getApplicationContext()).updateNote(note);
+
+        // Update database entry
+        NoteManager.newInstance(this).updateNote(note);
+
+        checkForCompletedNotes();
     }
 
-    private void deleteAllNotes() {
-        // Delete all entries in the database
-        NoteManager.newInstance(getApplicationContext()).deleteAllNotes();
-        // Delete all entries from the adapter cache
-        mNotesAdapter.removeAll();
+    private void deleteCompletedNotes() {
+        // Delete all entries in the database which are completed
+        NoteManager.newInstance(this).deleteCompletedNotes();
+
+        // Delete all completed entries from the adapter cache
+        mNotesAdapter.removeCompletedNotes();
+
+        checkForCompletedNotes();
+    }
+
+    private void checkForCompletedNotes() {
+        // Check if there is at least one completed note in the list
+        // If so, show delete_all_notes FAB with animation
+        if(mNotesAdapter.hasCompletedNote()) {
+            if(mFabDeleteNotes.getVisibility() != View.VISIBLE) {
+                showDeleteNoteFab();
+            }
+        } else {
+            if(mFabDeleteNotes.getVisibility() == View.VISIBLE) {
+                hideDeleteNotesFab();
+            }
+        }
     }
 
 
     /**************** VIEW METHODS *********************/
 
     // ********* ADD-NOTE DIALOG *************/
-    // Shows the AddNote Dialog
     private void showAddNoteDialog() {
-        mAddNoteDialog.show();
-    }
+        final MaterialDialog addNoteDialog = new MaterialDialog.Builder(this)
+                .title(R.string.dialog_add_note_title)
+                .customView(R.layout.dialog_add_note, false)
+                .positiveText(R.string.dialog_add_note_positive)
+                .negativeText(R.string.dialog_add_note_negative)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        View customView = dialog.getCustomView();
+                        EditText etNoteTitle = (EditText) customView.findViewById(R.id.et_dialog_add_note_title);
+                        ColorSelectionWheelView csw = (ColorSelectionWheelView) customView.findViewById(R.id.dialog_add_note_color_selection);
 
-    // Creates the AddNoteDialog and its customView
-    private void initAddNoteDialog() {
-        mAddNoteDialogCustomView = LayoutInflater.from(this).inflate(R.layout.dialog_add_note, null, false);
-        ColorSelectionWheelView csw = (ColorSelectionWheelView) mAddNoteDialogCustomView.findViewById(R.id.dialog_add_note_color_selection);
+                        saveNote(etNoteTitle.getText().toString(), csw.getSelectedColor());
+                    }
+                })
+                .showListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface dialog) {
+
+                    }
+                })
+                .build();
+
+        View customView = addNoteDialog.getCustomView();
+
+        // Initialize the color selection wheel view
+        ColorSelectionWheelView csw = (ColorSelectionWheelView) customView.findViewById(R.id.dialog_add_note_color_selection);
         csw.create(
                 getResources().getIntArray(R.array.priorityColors),
                 (int) getResources().getDimension(R.dimen.dialog_add_note_priority_item_size),
                 (int) getResources().getDimension((R.dimen.dialog_add_note_priority_list_margin))
         );
 
-        mAddNoteDialog = new MaterialDialog.Builder(this)
-                .title(R.string.dialog_add_note_title)
-                .customView(mAddNoteDialogCustomView, false)
-                .positiveText(R.string.dialog_add_note_positive)
-                .negativeText(R.string.dialog_add_note_negative)
-                .showListener(new DialogInterface.OnShowListener() {
-                    @Override
-                    public void onShow(DialogInterface dialog) {
-                        // Reset all fields before showing the dialog
-                        resetAddNoteDialog();
-                    }
-                })
-                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                    @Override
-                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        View customView = dialog.getCustomView();
-                        EditText etNoteTitle = (EditText) customView.findViewById(R.id.et_dialog_add_note_title);
-                        ColorSelectionWheelView csw = (ColorSelectionWheelView) mAddNoteDialogCustomView.findViewById(R.id.dialog_add_note_color_selection);
-                        // Create and save a new Note
-                        saveNote(etNoteTitle.getText().toString(), csw.getSelectedColor());
-                        // Note saved successfully
-                        Toast.makeText(MainActivity.this, "Successfully created the new Note!", Toast.LENGTH_SHORT).show();
-                    }
-                }).build();
-
-        final EditText etAddNoteTitle = (EditText) mAddNoteDialogCustomView.findViewById(R.id.et_dialog_add_note_title);
-
+        final EditText etNoteTitle = (EditText) customView.findViewById(R.id.et_dialog_add_note_title);
         // Listen for text changes for the title edittext and disable positive button when the edittext is empty
-        etAddNoteTitle.addTextChangedListener(new TextWatcher() {
+        etNoteTitle.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -218,11 +242,11 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String editTextContent = etAddNoteTitle.getText().toString().trim();
+                String editTextContent = etNoteTitle.getText().toString().trim();
                 if(!editTextContent.equals("")) {
-                    mAddNoteDialog.getActionButton(DialogAction.POSITIVE).setEnabled(true);
+                    addNoteDialog.getActionButton(DialogAction.POSITIVE).setEnabled(true);
                 } else {
-                    mAddNoteDialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
+                    addNoteDialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
                 }
             }
 
@@ -231,19 +255,46 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
 
             }
         });
-    }
 
-    // Resets all views inside the AddNoteDialog, because it is being reused and not created every time
-    private void resetAddNoteDialog() {
-        final EditText etAddNoteTitle = (EditText) mAddNoteDialogCustomView.findViewById(R.id.et_dialog_add_note_title);
-        etAddNoteTitle.setText("");
-        etAddNoteTitle.requestFocus();
+        // Disable positive action by default
+        addNoteDialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
 
         // Show keyboard
-        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        imm.showSoftInput(etAddNoteTitle, InputMethodManager.SHOW_IMPLICIT);
+        addNoteDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        etNoteTitle.requestFocus();
 
-        // Reset colors
-        mAddNoteDialog.getActionButton(DialogAction.POSITIVE).setEnabled(false);
+        // Show the dialog
+        addNoteDialog.show();
+    }
+
+    private void showDeleteNoteFab() {
+        mFabDeleteNotes.setVisibility(View.VISIBLE);
+
+        Animation animationFabShow = AnimationUtils.loadAnimation(this, R.anim.expand_in);
+        mFabDeleteNotes.startAnimation(animationFabShow);
+    }
+
+    private void hideDeleteNotesFab() {
+        Animation animationFabHide = AnimationUtils.loadAnimation(this, R.anim.expand_out);
+        animationFabHide.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mFabDeleteNotes.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        //mFabDeleteNotes.setAnimation(animationFabHide);
+        //animationFabHide.start();
+        mFabDeleteNotes.startAnimation(animationFabHide);
     }
 }

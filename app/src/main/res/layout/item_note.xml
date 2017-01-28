@@ -12,7 +12,7 @@
     android:paddingRight="16dp"
     android:paddingStart="16dp">
 
-    <com.eliburgi.zenote.vendors.SmoothCheckBox
+    <com.eliburgi.zenote.customviews.SmoothCheckBox
         android:id="@+id/scb_note_completed"
         android:layout_width="@dimen/smooth_checkbox_size"
         android:layout_height="@dimen/smooth_checkbox_size"
