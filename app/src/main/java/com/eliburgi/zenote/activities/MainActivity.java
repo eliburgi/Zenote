@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -27,12 +28,15 @@ import com.eliburgi.zenote.customviews.ColorSelectionWheelView;
 import com.eliburgi.zenote.data.NoteManager;
 import com.eliburgi.zenote.models.Note;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements NotesAdapter.NoteItemListener {
 
     private NotesAdapter mNotesAdapter;
     private FloatingActionButton mFabDeleteNotes;
+
+    private List<Note> mRemovedNotes = new ArrayList<>();
 
     /********************************************
     /*--------------- ACTIVITY OVERRIDES --------
@@ -105,10 +109,8 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.action_settings:
-                return true;
-            case R.id.menu_remove_all_notes:
-                deleteCompletedNotes();
+            case R.id.menu_undo:
+                performUndo();
                 return true;
             default:
                 return false;
@@ -174,10 +176,20 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
         // Delete all entries in the database which are completed
         NoteManager.newInstance(this).deleteCompletedNotes();
 
+        // Remember the notes that are going to be deleted
+        mRemovedNotes = mNotesAdapter.getCompletedNotes();
+
         // Delete all completed entries from the adapter cache
         mNotesAdapter.removeCompletedNotes();
 
+        // Show/Hide FAB accordingly
         checkForCompletedNotes();
+
+        // Show Snackbar with Undo option
+        if(isUndoAvailable()) {
+            showUndoUi();
+        }
+
     }
 
     private void checkForCompletedNotes() {
@@ -194,6 +206,23 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
         }
     }
 
+    private boolean isUndoAvailable() {
+        return !mRemovedNotes.isEmpty();
+    }
+
+    private void performUndo() {
+        for(Note n : mRemovedNotes) {
+            // Add removed notes to the database again
+            long id = NoteManager.newInstance(this).createNote(n);
+            n.setId(id);
+
+            // Add removed notes to the adapter cache
+            mNotesAdapter.add(n);
+        }
+        mRemovedNotes.clear();
+
+        checkForCompletedNotes();
+    }
 
     /**************** VIEW METHODS *********************/
 
@@ -296,5 +325,16 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.Note
         //mFabDeleteNotes.setAnimation(animationFabHide);
         //animationFabHide.start();
         mFabDeleteNotes.startAnimation(animationFabHide);
+    }
+
+    private void showUndoUi() {
+        Snackbar undoSnackbar = Snackbar.make(findViewById(R.id.coordinator_layout), R.string.snackbar_removed_note_message, Snackbar.LENGTH_LONG);
+        undoSnackbar.setAction(R.string.snackbar_undo_action, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performUndo();
+            }
+        });
+        undoSnackbar.show();
     }
 }

@@ -9,8 +9,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.eliburgi.zenote.R;
-import com.eliburgi.zenote.models.Note;
 import com.eliburgi.zenote.customviews.SmoothCheckBox;
+import com.eliburgi.zenote.models.Note;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +91,13 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
 
     public void add(@NonNull Note note) {
         mNotes.add(note);
+        notifyDataSetChanged();
+    }
+
+    public void addAll(@NonNull List<Note> notes) {
+        for(Note n : notes) {
+            mNotes.add(n);
+        }
         notifyDataSetChanged();
     }
 
